@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<package>
+  <name>cp_clothes_db</name>
+  <version>0.0.1</version>
+  <description>The cp_clothes_db package</description>
+
+  <!-- team -->
+    <maintainer email="luz.martinez@amtc.cl">
+        Luz Martinez</maintainer>
+    <author     email="luz.martinez@amtc.cl">
+        Luz Martinez</author>
+
+  <!-- specific developers -->
+  <maintainer email="luz.martinez@amtc.cl">Luz Martinez</maintainer>
+  <author>Luz Martinez</author>
+
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend> 
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>roslib</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>std_srvs</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>uchile_msgs</build_depend>
+  <build_depend>uchile_srvs</build_depend>
+  <build_depend>uchile_util</build_depend>
+  <build_depend>image_transport</build_depend>
+  <build_depend>cv_bridge</build_depend>
+  <build_depend>openni2_launch</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>pcl_ros</build_depend>
+  <build_depend>libpcl-all-dev</build_depend>
+  <build_depend>pcl_conversions</build_depend>
+
+  <run_depend>roscpp</run_depend>
+  <run_depend>roslib</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>std_srvs</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>uchile_msgs</run_depend>
+  <run_depend>uchile_srvs</run_depend>
+  <run_depend>uchile_util</run_depend>
+  <run_depend>image_transport</run_depend>
+  <run_depend>cv_bridge</run_depend>
+  <run_depend>openni2_launch</run_depend>
+  <run_depend>pcl_ros</run_depend>
+  <run_depend>libpcl-all</run_depend>
+  <run_depend>pcl_conversions</run_depend>
+  
+  <export>
+  </export>
+</package>
