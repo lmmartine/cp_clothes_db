@@ -10,8 +10,8 @@
 	<arg name="gripper_frame" default="/r2_ee" />
 
 	<!-- table detector -->
-	<node name="xtion1_mask" pkg="uchile_clothes" type="table_detector" >
-		<rosparam file="$(find uchile_clothes)/key_part_recognition/config/table_detector.yaml"/>
+	<node name="xtion1_mask" pkg="cp_clothes_db" type="cp_clothes_db" >
+		<!-- <rosparam file="$(find uchile_clothes)/key_part_recognition/config/table_detector.yaml"/> -->
 		<param name="base_frame"	value="$(arg base_frame)"/>
 		<param name="rgbd_frame" 	value="$(arg rgbd_frame)"/>
 		<param name="depth_frame"	value="$(arg depth_frame)"/>

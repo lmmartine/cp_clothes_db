@@ -9,21 +9,30 @@ CPCLOTHESDB::CPCLOTHESDB(string name):_name(name),_enabled(false) {
     _tf_listener = new tf::TransformListener(ros::Duration(10.0));
 
     // - - - - - - - p a r a m e t e r s - - - - - - - - - - -
-    uchile_util::ParameterServerWrapper psw;
-    psw.getParameter("base_frame",_base_frame,"base_link");
-    psw.getParameter("rgbd_frame",_rgbd_frame,"xtion2_link");
-    psw.getParameter("depth_frame",_depth_frame,"xtion2_depth_optical_frame");
-    psw.getParameter("point_topic",_point_topic,"/xtion2/depth/points");
-    psw.getParameter("depth_topic",_depth_topic,"/xtion2/depth/image_raw");
-    psw.getParameter("gripper_frame", _gripper_frame, "/r2_ee");
-    psw.getParameter("cut_robot", _cut_robot, false);
-    psw.getParameter("crop_width", _crop_width, 2.0);
-    psw.getParameter("crop_depth", _crop_depth, 2.0);
-    psw.getParameter("crop_min_z", _crop_min_z, 0.75);
-    psw.getParameter("crop_max_z", _crop_max_z, 2.0);
+
+    nh.param<std::string>("base_frame",_base_frame,"base_link");
+    nh.param<std::string>("rgbd_frame",_rgbd_frame,"xtion2_link");
+    nh.param<std::string>("depth_frame",_depth_frame,"xtion2_depth_optical_frame");
+    nh.param<std::string>("point_topic",_point_topic,"/xtion2/depth/points");
+    nh.param<std::string>("rgb_topic",_rgb_topic,"/xtion2/rgb/image_raw");
+    nh.param<std::string>("depth_topic",_depth_topic,"/xtion2/depth/image_raw");
+    nh.param<std::string>("gripper_frame", _gripper_frame, "/r2_ee");
+    nh.param<std::string>("class", _class, "pant");
+    nh.param("id_move", _idmove, 1);
+    nh.param("cut_robot", _cut_robot, false);
+    nh.param<float>("crop_width", _crop_width, 2.0);
+    nh.param<float>("crop_depth", _crop_depth, 2.0);
+    nh.param<float>("crop_min_z", _crop_min_z, 0.75);
+    nh.param<float>("crop_max_z", _crop_max_z, 2.0);
+
+
 
     // variables
     last_gripper_position = 0;
+
+    nxtion = 1;
+    if (_depth_topic.find("xtion2") != std::string::npos)
+        nxtion = 2;
 
     // - - - - - - - - p u b l i s h e r s  - - - - - - - - - - - -
     image_transport::ImageTransport it(nh);
@@ -38,7 +47,7 @@ CPCLOTHESDB::~CPCLOTHESDB() {
     delete _tf_listener;
 }
 
- bool CPCLOTHESDB::_active_service(uchile_srvs::Onoff::Request  &req, uchile_srvs::Onoff::Response &res) {
+ bool CPCLOTHESDB::_active_service(cp_clothes_db::Onoff::Request  &req, cp_clothes_db::Onoff::Response &res) {
 
     if(req.select == true) {
         if (!_is_on) {
@@ -66,6 +75,13 @@ void CPCLOTHESDB::_process_point(const pcl::PCLPointCloud2::ConstPtr &point_clou
     if(!_is_on) return;
     cloud_in=point_cloud_in;
     ready_point = true;
+}
+
+ void CPCLOTHESDB::_process_rgb(const sensor_msgs::ImageConstPtr& img){
+    if(!_is_on) return;
+    rgb_in=img;
+    // image_frameid = img->header.frame_id;
+    ready_rgb = true;
 }
 
  void CPCLOTHESDB::_process_depth(const sensor_msgs::ImageConstPtr& img){
@@ -128,6 +144,32 @@ void CPCLOTHESDB::crop_robot_pointcloud(PointCloud cloud_in, PointCloud::Ptr clo
 
 }
 
+void CPCLOTHESDB::save_images (cv::Mat rgbimg, cv::Mat  depthimg, cv::Mat mask){
+
+    // Save opencv images 
+    std::stringstream name_out, rgb_name_out, depth_name_out, mask_name_out;
+
+    name_out<<"/home/lmartinez/ROS/src/cp_clothes_db/IMG_OUT/"<<_class<<"/"<<_class;
+    //buscar numero
+    int id = 0;
+    bool numdetected = false;
+    while ( !numdetected)
+    {
+        id ++;
+        rgb_name_out << name_out.str()<<_idmove<<"_x"<<nxtion<<"img"<<id <<"_rgb.png";
+        if (!cv::imread(rgb_name_out.str(), CV_LOAD_IMAGE_COLOR).data)
+            numdetected = true;    
+    }
+
+    depth_name_out << name_out.str()<<_idmove<<"_x"<<nxtion<<"img"<<id <<"_depth.png";
+    mask_name_out << name_out.str()<<_idmove<<"_x"<<nxtion<<"img"<<id <<"_mask.png";
+
+    cv::imwrite(rgb_name_out.str(), rgbimg);
+    cv::imwrite(depth_name_out.str(), depthimg);
+    cv::imwrite(mask_name_out.str(), mask);
+}
+
+
 
 // - - - - -  RUN   - - - - - - - - - -
 void CPCLOTHESDB::run() {
@@ -139,7 +181,14 @@ void CPCLOTHESDB::run() {
     ready_point = false;
     ready_depth = false;
     
-    sensor_msgs::Image msg_depth(*depth_in);
+//     sensor_msgs::ImageConstPtr image_in;
+// sensor_msgs::ImageConstPtr depth_in;
+
+//     sensor_msgs::Image msg_depth(*depth_in);
+//     sensor_msgs::Image msg_rgb(*rgb_in);
+    cv::Mat ImageIn, DepthIn;
+    ImageIn  = cv_bridge::toCvCopy((rgb_in), sensor_msgs::image_encodings::BGR8)->image;
+    DepthIn = cv_bridge::toCvShare(depth_in)->image;
 
     // // Clouds
     PointCloud::Ptr cloud_helper      (new PointCloud);
@@ -225,6 +274,7 @@ void CPCLOTHESDB::run() {
      if (_mask_pub.getNumSubscribers() > 0) {
             _mask_pub.publish(msg_mask);
     }
+
 
 }
 

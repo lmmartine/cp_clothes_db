@@ -9,11 +9,8 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs 
   std_srvs 
   sensor_msgs 
-  uchile_msgs 
-  uchile_srvs 
   image_transport 
   cv_bridge
-  uchile_util
   pcl_ros
   pcl_conversions
 )
@@ -25,12 +22,24 @@ find_package(PCL 1.7 REQUIRED)
 set(VERSION_FILE_PATH "${CATKIN_DEVEL_PREFIX}/include")
 file(MAKE_DIRECTORY "${VERSION_FILE_PATH}")
 
+# Generate services in the 'srv' folder
+add_service_files(
+  FILES
+  Onoff.srv
+)
+
+generate_messages(
+  DEPENDENCIES
+  geometry_msgs
+  sensor_msgs
+  std_msgs
+)
 
 ###################################
 ## catkin specific configuration ##
 ###################################
 catkin_package(
-  CATKIN_DEPENDS roscpp roslib std_msgs std_srvs sensor_msgs uchile_msgs uchile_srvs uchile_util image_transport cv_bridge pcl_ros
+  CATKIN_DEPENDS roscpp roslib std_msgs std_srvs sensor_msgs image_transport cv_bridge pcl_ros
 )
 
 ###########

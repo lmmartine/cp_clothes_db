@@ -62,10 +62,10 @@
 
 
 // services
-#include <uchile_srvs/Onoff.h>
+#include <cp_clothes_db/Onoff.h>
 
 // Parameter Server Wrapper
-#include <uchile_util/ParameterServerWrapper.h>
+//#include <uchile_util/ParameterServerWrapper.h>
 
 namespace uchile_perception {
 
@@ -87,11 +87,15 @@ private:
 	std::string _base_frame;
 	std::string _rgbd_frame;
 	std::string _depth_frame;
+	std::string _rgb_topic;
 	std::string _depth_topic;
 	std::string _point_topic;
 	std::string _imagePoint_topic;
 
 	// // usable cloud box
+	std::string _class;
+	int _idmove;
+	int nxtion;
 	std::string _gripper_frame;
 	float last_gripper_position;
 	bool _cut_robot;
@@ -111,6 +115,7 @@ private:
 	ros::Subscriber _subs_point;
 
 	pcl::PCLPointCloud2::ConstPtr cloud_in;
+	sensor_msgs::ImageConstPtr rgb_in;
 	sensor_msgs::ImageConstPtr depth_in;
 	std::string image_frameid;
 
@@ -128,6 +133,7 @@ private:
 
 public:
 	bool _is_on;
+	bool ready_rgb;
 	bool ready_depth;
 	bool ready_point;
 
@@ -142,12 +148,14 @@ private:
 	// - - - - - - S u b s c r i b e r   C a l l b a c k s  - - - - - - - - -
 	void _process_point(const pcl::PCLPointCloud2::ConstPtr &point_cloud_in);
 	void _process_depth(const sensor_msgs::ImageConstPtr& img);
+	void _process_rgb(const sensor_msgs::ImageConstPtr& img);
 
 	// - - - - - - - - - - - - S e r v i c e s - - - - - - - - -
-	bool _active_service(uchile_srvs::Onoff::Request  &req, uchile_srvs::Onoff::Response &res) ;
+	bool _active_service(cp_clothes_db::Onoff::Request  &req, cp_clothes_db::Onoff::Response &res) ;
 
 
 	// - - - - -  Functions  - - - - - - - - - -
+	void save_images (cv::Mat rgbimg, cv::Mat  depthimg, cv::Mat mask);
 	float get_gripper_position ();
 	void downsample_pointcloud(const PointCloud::Ptr cloud_in, PointCloud::Ptr cloud_out);
 	bool transform_pointcloud(const PointCloud::Ptr cloud_in, PointCloud::Ptr cloud_out, std::string target_frame);
