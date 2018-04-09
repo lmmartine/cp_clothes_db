@@ -62,11 +62,9 @@
 #include <pcl/surface/convex_hull.h>
 
 
-// services
+// srvs and msgs
 #include <cp_clothes_db/Onoff.h>
-
-// Parameter Server Wrapper
-//#include <uchile_util/ParameterServerWrapper.h>
+#include <geometry_msgs/Pose.h>
 
 namespace uchile_perception {
 
@@ -159,7 +157,7 @@ private:
 
 	// - - - - -  Functions  - - - - - - - - - -
 	void save_images (cv::Mat rgbimg, cv::Mat  depthimg, cv::Mat mask);
-	float get_gripper_position ();
+	geometry_msgs::Pose get_gripper_position ();
 	void downsample_pointcloud(const PointCloud::Ptr cloud_in, PointCloud::Ptr cloud_out);
 	bool transform_pointcloud(const PointCloud::Ptr cloud_in, PointCloud::Ptr cloud_out, std::string target_frame);
 	void crop_pointcloud( PointCloud cloud_in, PointCloud::Ptr cloud_out);

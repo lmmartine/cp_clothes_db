@@ -107,9 +107,9 @@ void CPCLOTHESDB::crop_pointcloud(PointCloud cloud_in, PointCloud::Ptr cloud_out
 
 }
 
-float CPCLOTHESDB::get_gripper_position (){
+geometry_msgs::Pose CPCLOTHESDB::get_gripper_position (){
     tf::StampedTransform transform;
-    // float tolerance_ = 0.1;
+    geometry_msgs::Pose gripper;
 
     try{
       _tf_listener->lookupTransform(_base_frame, _gripper_frame, ros::Time(0), transform);
@@ -118,7 +118,16 @@ float CPCLOTHESDB::get_gripper_position (){
       ROS_ERROR("%s",ex.what());
     }
     lasttime_transform = transform.stamp_;
-    return transform.getOrigin().getZ();
+    gripper.position.x = transform.getOrigin().getX();
+    gripper.position.y = transform.getOrigin().getY();
+    gripper.position.z = transform.getOrigin().getZ();
+
+    gripper.orientation.x = transform.getRotation().getX();
+    gripper.orientation.y = transform.getRotation().getY();
+    gripper.orientation.z = transform.getRotation().getZ();
+    gripper.orientation.w = transform.getRotation().getW();
+
+    return gripper;
 
 }
 
@@ -148,21 +157,16 @@ void CPCLOTHESDB::crop_robot_pointcloud(PointCloud cloud_in, PointCloud::Ptr clo
 
 void CPCLOTHESDB::save_images (cv::Mat rgbimg, cv::Mat  depthimg, cv::Mat mask){
 
+
+
     // Save opencv images 
     std::stringstream name_out, rgb_name_out, depth_name_out, mask_name_out;
 
     name_out<<ros::package::getPath("cp_clothes_db")<<"/IMG_OUT/"<<_class<<"/"<<_class;
-    //buscar numero
-    // int id = 0;
-    bool numdetected = false;
-    // while ( !numdetected)
-    // {
-    //     id ++;
-        rgb_name_out << name_out.str()<<_idmove<<"_x"<<nxtion<<"img"<<_idimg <<"_rgb.png";
-    //     if (!cv::imread(rgb_name_out.str(), CV_LOAD_IMAGE_COLOR).data)
-    //         numdetected = true;    
-    // }
 
+    bool numdetected = false;
+
+    rgb_name_out << name_out.str()<<_idmove<<"_x"<<nxtion<<"img"<<_idimg <<"_rgb.png";
     depth_name_out << name_out.str()<<_idmove<<"_x"<<nxtion<<"img"<<_idimg <<"_depth.png";
     mask_name_out << name_out.str()<<_idmove<<"_x"<<nxtion<<"img"<<_idimg <<"_mask.png";
 
@@ -170,6 +174,9 @@ void CPCLOTHESDB::save_images (cv::Mat rgbimg, cv::Mat  depthimg, cv::Mat mask){
     cv::imwrite(rgb_name_out.str(), rgbimg);
     cv::imwrite(depth_name_out.str(), depthimg);
     cv::imwrite(mask_name_out.str(), mask);
+
+    ROS_INFO_STREAM("[" << _name << "]  Saved images '"
+                << name_out.str()<<_idmove<<"_x"<<nxtion<<"img"<<_idimg );
 }
 
 
@@ -177,18 +184,13 @@ void CPCLOTHESDB::save_images (cv::Mat rgbimg, cv::Mat  depthimg, cv::Mat mask){
 // - - - - -  RUN   - - - - - - - - - -
 void CPCLOTHESDB::run() {
 
-    float gripper_position = get_gripper_position();
+    float gripper_position = get_gripper_position().position.z;
     if (std::abs(last_gripper_position - gripper_position) < 0.005) return;    
 
 
     ready_point = false;
     ready_depth = false;
     
-//     sensor_msgs::ImageConstPtr image_in;
-// sensor_msgs::ImageConstPtr depth_in;
-
-//     sensor_msgs::Image msg_depth(*depth_in);
-//     sensor_msgs::Image msg_rgb(*rgb_in);
     cv::Mat ImageIn, DepthIn;
     ImageIn  = cv_bridge::toCvCopy((rgb_in), sensor_msgs::image_encodings::BGR8)->image;
     DepthIn = cv_bridge::toCvShare(depth_in)->image;
@@ -209,8 +211,6 @@ void CPCLOTHESDB::run() {
         bool success_transformation = pcl_ros::transformPointCloud(_base_frame, *cloud_helper, transformed_cloud, *_tf_listener);
         if (!success_transformation) return;
 
-        ROS_INFO_STREAM("[" << _name << "]  transform rgbd pointcloud2 in '"
-                << cloud_helper->header.frame_id << "' frame, to '" << _base_frame );
     } catch (tf::TransformException & ex) {
         ROS_ERROR_STREAM("[" << _name << "] Failed to transform rgbd pointcloud2 in '"
                 << cloud_helper->header.frame_id << "' frame, to '" << _base_frame << "' : " << ex.what());
@@ -229,11 +229,7 @@ void CPCLOTHESDB::run() {
     filter_cloud->header.frame_id = _base_frame;
 
     try {
-        // _tf_listener->waitForTransform(_depth_frame, filter_cloud->header.frame_id, ros::Time::now(), ros::Duration(2.0));
         pcl_ros::transformPointCloud(_depth_frame, *filter_cloud, cloud_process, *_tf_listener);
-                ROS_INFO_STREAM("[" << _name << "]  transform rgbd pointcloud2 in '"
-                << filter_cloud->header.frame_id << "' frame, to '" << _depth_frame );
-
     } catch (tf::TransformException & ex) {
 
         ROS_ERROR_STREAM("[" << _name << "] Failed to transform rgbd pointcloud2 in '"
@@ -279,7 +275,7 @@ void CPCLOTHESDB::run() {
     }
 
     save_images (ImageIn,  DepthIn, mask);
-
+    last_gripper_position = gripper_position;
 }
 
 
