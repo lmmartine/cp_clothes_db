@@ -17,7 +17,7 @@
 		<param name="point_topic" 	value="$(arg point_topic)"/>
 		<param name="depth_topic" 	value="$(arg depth_topic)"/>
 		<param name="cut_robot" 	value="$(arg cut_robot)"/>
-		<param name="crop_min_z" 	value="0.694"/>
+		<param name="crop_min_z" 	value="0.684"/>
 	</node>
 
 

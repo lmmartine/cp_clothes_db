@@ -29,6 +29,7 @@ CPCLOTHESDB::CPCLOTHESDB(string name):_name(name),_enabled(false) {
 
     // variables
     last_gripper_position = 0;
+    _idimg = 1;
 
     nxtion = 1;
     if (_depth_topic.find("xtion2") != std::string::npos)
@@ -53,6 +54,7 @@ CPCLOTHESDB::~CPCLOTHESDB() {
         if (!_is_on) {
             _subs_point = priv.subscribe(_point_topic, 1, &CPCLOTHESDB::_process_point, this); 
             _subs_depth = priv.subscribe(_depth_topic, 1, &CPCLOTHESDB::_process_depth, this); 
+            _subs_rgb = priv.subscribe(_rgb_topic, 1, &CPCLOTHESDB::_process_rgb, this); 
             _is_on = true;
 
             ROS_INFO_STREAM("Turning on "+_imagePoint_topic+". . . OK");
@@ -149,21 +151,22 @@ void CPCLOTHESDB::save_images (cv::Mat rgbimg, cv::Mat  depthimg, cv::Mat mask){
     // Save opencv images 
     std::stringstream name_out, rgb_name_out, depth_name_out, mask_name_out;
 
-    name_out<<"/home/lmartinez/ROS/src/cp_clothes_db/IMG_OUT/"<<_class<<"/"<<_class;
+    name_out<<ros::package::getPath("cp_clothes_db")<<"/IMG_OUT/"<<_class<<"/"<<_class;
     //buscar numero
-    int id = 0;
+    // int id = 0;
     bool numdetected = false;
-    while ( !numdetected)
-    {
-        id ++;
-        rgb_name_out << name_out.str()<<_idmove<<"_x"<<nxtion<<"img"<<id <<"_rgb.png";
-        if (!cv::imread(rgb_name_out.str(), CV_LOAD_IMAGE_COLOR).data)
-            numdetected = true;    
-    }
+    // while ( !numdetected)
+    // {
+    //     id ++;
+        rgb_name_out << name_out.str()<<_idmove<<"_x"<<nxtion<<"img"<<_idimg <<"_rgb.png";
+    //     if (!cv::imread(rgb_name_out.str(), CV_LOAD_IMAGE_COLOR).data)
+    //         numdetected = true;    
+    // }
 
-    depth_name_out << name_out.str()<<_idmove<<"_x"<<nxtion<<"img"<<id <<"_depth.png";
-    mask_name_out << name_out.str()<<_idmove<<"_x"<<nxtion<<"img"<<id <<"_mask.png";
+    depth_name_out << name_out.str()<<_idmove<<"_x"<<nxtion<<"img"<<_idimg <<"_depth.png";
+    mask_name_out << name_out.str()<<_idmove<<"_x"<<nxtion<<"img"<<_idimg <<"_mask.png";
 
+    _idimg ++;
     cv::imwrite(rgb_name_out.str(), rgbimg);
     cv::imwrite(depth_name_out.str(), depthimg);
     cv::imwrite(mask_name_out.str(), mask);
@@ -275,6 +278,7 @@ void CPCLOTHESDB::run() {
             _mask_pub.publish(msg_mask);
     }
 
+    save_images (ImageIn,  DepthIn, mask);
 
 }
 

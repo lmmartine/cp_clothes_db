@@ -21,6 +21,7 @@
 
 // ROS
 #include <ros/ros.h>
+ #include <ros/package.h>
 #include <tf/transform_listener.h>
 #include <pcl_ros/transforms.h>
 #include <pcl_ros/point_cloud.h>
@@ -95,6 +96,7 @@ private:
 	// // usable cloud box
 	std::string _class;
 	int _idmove;
+	int _idimg;
 	int nxtion;
 	std::string _gripper_frame;
 	float last_gripper_position;
@@ -111,6 +113,7 @@ private:
 	image_transport::Publisher _mask_pub;
 
 	//Subscribers 
+	ros::Subscriber _subs_rgb;
 	ros::Subscriber _subs_depth;
 	ros::Subscriber _subs_point;
 
