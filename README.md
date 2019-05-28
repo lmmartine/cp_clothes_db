@@ -14,7 +14,7 @@ $ rosservice call /xtion2_mask/active "select: true"
 ```
 Play the rosbag
 ```bash
-$ rosbag play towel1_move1.bag
+$ rosbag play tf_static.bag
 $ rosbag play pant1_move2_topics.bag
 ```
 
