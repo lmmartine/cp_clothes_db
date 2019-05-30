@@ -1,6 +1,13 @@
-# cp_clothes_db
+#  Continuous perception of a clothes database
 
-Run the nodes:
+First, create the directory where the images of the database will be stored:
+
+```bash
+$ roscd cp_clothes_db
+$ mkdir IMG_OUT
+```
+
+Now you are ready to run the nodes:
 
 ```bash
 $ roscore
@@ -18,7 +25,7 @@ $ rosbag play tf_static.bag
 $ rosbag play pant1_move2_topics.bag
 ```
 
-Now you you see with rqt_image_view the mask published on the topic "/xtion2/mask/image_raw"
+Now you can see with rqt_image_view the mask published on the topic "/xtion2/mask/image_raw"
 
 
 
