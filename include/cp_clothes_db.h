@@ -85,13 +85,13 @@ private:
 	// - - - - - Parameters - - - - - - -
 	std::string _base_frame;
 	std::string _rgbd_frame;
+	std::string _rgb_frame;
 	std::string _depth_frame;
 	std::string _rgb_topic;
 	std::string _depth_topic;
 	std::string _point_topic;
 	std::string _imagePoint_topic;
 
-	// // usable cloud box
 	std::string _class;
 	int _idmove;
 	int _idimg;

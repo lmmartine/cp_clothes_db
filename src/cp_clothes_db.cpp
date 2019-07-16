@@ -10,20 +10,22 @@ CPCLOTHESDB::CPCLOTHESDB(string name):_name(name),_enabled(false) {
 
     // - - - - - - - p a r a m e t e r s - - - - - - - - - - -
 
-    nh.param<std::string>("base_frame",_base_frame,"base_link");
-    nh.param<std::string>("rgbd_frame",_rgbd_frame,"xtion2_link");
-    nh.param<std::string>("depth_frame",_depth_frame,"xtion2_depth_optical_frame");
-    nh.param<std::string>("point_topic",_point_topic,"/xtion2/depth/points");
-    nh.param<std::string>("rgb_topic",_rgb_topic,"/xtion2/rgb/image_raw");
-    nh.param<std::string>("depth_topic",_depth_topic,"/xtion2/depth/image_raw");
-    nh.param<std::string>("gripper_frame", _gripper_frame, "/r2_ee");
-    nh.param<std::string>("class", _class, "pant");
-    nh.param("id_move", _idmove, 1);
-    nh.param("cut_robot", _cut_robot, false);
-    nh.param<float>("crop_width", _crop_width, 2.0);
-    nh.param<float>("crop_depth", _crop_depth, 2.0);
-    nh.param<float>("crop_min_z", _crop_min_z, 0.75);
-    nh.param<float>("crop_max_z", _crop_max_z, 2.0);
+    priv.param<std::string>("base_frame",_base_frame,"base_link");
+    priv.param<std::string>("rgbd_frame",_rgbd_frame,"xtion2_link");
+    priv.param<std::string>("rgb_frame",_rgb_frame,"xtion2_rgb_optical_frame");
+    priv.param<std::string>("depth_frame",_depth_frame,"xtion2_depth_optical_frame");
+    priv.param<std::string>("point_topic",_point_topic,"/xtion2/depth/points");
+    priv.param<std::string>("rgb_topic",_rgb_topic,"/xtion2/rgb/image_raw");
+    priv.param<std::string>("depth_topic",_depth_topic,"/xtion2/depth/image_raw");
+    priv.param<std::string>("gripper_frame", _gripper_frame, "/r2_ee");
+    priv.param<std::string>("class", _class, "pant");
+    priv.param<int>("id_move", _idmove, 1);
+    priv.param<int>("nxtion", nxtion, 1);
+    priv.param<bool>("cut_robot", _cut_robot, false);
+    priv.param<float>("crop_width", _crop_width, 2.0);
+    priv.param<float>("crop_depth", _crop_depth, 2.0);
+    priv.param<float>("crop_min_z", _crop_min_z, 0.75);
+    priv.param<float>("crop_max_z", _crop_max_z, 2.0);
 
 
 
@@ -31,13 +33,16 @@ CPCLOTHESDB::CPCLOTHESDB(string name):_name(name),_enabled(false) {
     last_gripper_position = 0;
     _idimg = 1;
 
-    nxtion = 1;
-    if (_depth_topic.find("xtion2") != std::string::npos)
-        nxtion = 2;
-
+    // nxtion = 1;
+    // if (_depth_topic.find("xtion2") != std::string::npos)
+    //     nxtion = 2;
+     ROS_INFO_STREAM("Working with xtion"<<nxtion);
     // - - - - - - - - p u b l i s h e r s  - - - - - - - - - - - -
+    std::stringstream topic;
+    topic << "/xtion"<<nxtion<<"/mask/image_raw";
+
     image_transport::ImageTransport it(nh);
-    _mask_pub = it.advertise("/xtion2/mask/image_raw", 1);
+    _mask_pub = it.advertise(topic.str(), 1);
 
     // - - - - - - - - s e r v i c e s  - - - - - - - - - - - - -
     _active_server  = priv.advertiseService("active", &CPCLOTHESDB::_active_service, this);
@@ -206,6 +211,7 @@ void CPCLOTHESDB::run() {
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     // Step1: Transform cloud to '_base_frame'
+  
     try {
         cloud_helper->header.frame_id = _depth_frame;
         bool success_transformation = pcl_ros::transformPointCloud(_base_frame, *cloud_helper, transformed_cloud, *_tf_listener);
@@ -229,7 +235,8 @@ void CPCLOTHESDB::run() {
     filter_cloud->header.frame_id = _base_frame;
 
     try {
-        pcl_ros::transformPointCloud(_depth_frame, *filter_cloud, cloud_process, *_tf_listener);
+        bool success_transformation = pcl_ros::transformPointCloud(_rgb_frame, *filter_cloud, cloud_process, *_tf_listener);
+        if (!success_transformation) return;
     } catch (tf::TransformException & ex) {
 
         ROS_ERROR_STREAM("[" << _name << "] Failed to transform rgbd pointcloud2 in '"
@@ -237,9 +244,16 @@ void CPCLOTHESDB::run() {
         return;
     }
 
+
     // Stet4: Get Mask
     int mask_W = 640, mask_H=480;
-    float fx = 570, fy = 570;
+    float cx=319.5,  cy = 239.5; //rgb intrinsic
+    float fx = 525.0, fy = 525.0;
+    //float cx=314.5,  cy = 235.5; //depth intrinsic
+    //float fx = 570.3422241210938, fy = 570.3422241210938;
+    float kfactor= 0.0019047619;
+    float scalingFactor = 5000.0;
+
     cv::Mat mask =  cv::Mat::zeros(mask_H, mask_W, CV_8UC1);
 
     for ( c_it = cloud_process.begin(); c_it < cloud_process.end(); c_it++) {
@@ -247,10 +261,10 @@ void CPCLOTHESDB::run() {
         if (std::isfinite(c_it->x) && std::isfinite(c_it->y) && std::isfinite(c_it->z) )
         {
             int x_2d,y_2d;
-            float x_3d = c_it->x, y_3d = c_it->y, z_3d = c_it->z ;
+            float x_3d = c_it->x, y_3d = c_it->y, z_3d = c_it->z;
 
-            x_2d = (x_3d/z_3d)*fx  + mask_W/2;
-            y_2d = (y_3d/z_3d)*fy  + mask_H/2;
+            x_2d = x_3d*fx/z_3d  + cx;
+            y_2d = y_3d*fy/z_3d  + cy;
 
             if (x_2d>=0 && y_2d>=0 && x_2d<mask_W && y_2d<mask_H)
                 mask.at<uchar>(y_2d,x_2d) = (uchar)255;
@@ -299,7 +313,7 @@ int main(int argc, char** argv) {
     ros::Rate r(_fps);
 
     while(ros::ok()){
-        if (node->_is_on && node->ready_point && node->ready_depth)
+        if (node->_is_on && node->ready_point && node->ready_depth && node->ready_rgb)
           node->run();
           
         // r.sleep();
