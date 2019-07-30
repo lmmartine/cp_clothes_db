@@ -93,6 +93,7 @@ private:
 	std::string _imagePoint_topic;
 
 	std::string _class;
+	std::string _directory_name;
 	int _idmove;
 	int _idimg;
 	int nxtion;

@@ -2,13 +2,16 @@
 
 	<arg name="base_frame" 	default="base_link" />
 	<arg name="rgbd_frame" 	default="xtion1_link_ee" />
-	<arg name="rgb_frame" default="/xtion1_rgb_optical_frame" />
+	<arg name="rgb_frame" 	default="/xtion1_rgb_optical_frame"/><!-- /xtion1_rgb_optical_frame -->
 	<arg name="depth_frame" default="/xtion1_depth_optical_frame" />
 	<arg name="point_topic"	default="/xtion1/depth/points"/>
 	<arg name="depth_topic"	default="/xtion1/depth/image_raw"/>
 	<arg name="rgb_topic"	default="/xtion1/rgb/image_raw"/>
 	<arg name="cut_robot" 	default="true" />
 	<arg name="gripper_frame" default="/r2_ee" />
+
+	<arg name="class" default="pant" />
+	<arg name="directory_name" default="pant" />
 
 	<!-- table detector 0.718-->
 	<node name="xtion1_mask" pkg="cp_clothes_db" type="cp_clothes_db" >
@@ -22,11 +25,13 @@
 		<param name="cut_robot" 	value="$(arg cut_robot)"/>
 		<param name="crop_min_z" 	value="0.74"/>
 		<param name="nxtion" 	value="1"/>
-		<param name="class" 	value="pant"/>
+		<param name="class" 	value="$(arg class)"/>
+		<param name="directory_name" 	value="$(arg directory_name)"/>
 	</node>
 
 
-
+ 	<!-- <node pkg="tf" type="static_transform_publisher" name="x1_rgb" args="0 0 0 0 0 0 /xtion1_depth_optical_frame /x1_rgb 100"/>  -->
+ <!-- x y z yaw pitch roll  -->
 
 </launch>
 

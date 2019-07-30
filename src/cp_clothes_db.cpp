@@ -19,6 +19,7 @@ CPCLOTHESDB::CPCLOTHESDB(string name):_name(name),_enabled(false) {
     priv.param<std::string>("depth_topic",_depth_topic,"/xtion2/depth/image_raw");
     priv.param<std::string>("gripper_frame", _gripper_frame, "/r2_ee");
     priv.param<std::string>("class", _class, "pant");
+    priv.param<std::string>("directory_name", _directory_name, "pant");
     priv.param<int>("id_move", _idmove, 1);
     priv.param<int>("nxtion", nxtion, 1);
     priv.param<bool>("cut_robot", _cut_robot, false);
@@ -167,7 +168,7 @@ void CPCLOTHESDB::save_images (cv::Mat rgbimg, cv::Mat  depthimg, cv::Mat mask){
     // Save opencv images 
     std::stringstream name_out, rgb_name_out, depth_name_out, mask_name_out;
 
-    name_out<<ros::package::getPath("cp_clothes_db")<<"/IMG_OUT/"<<_class<<"/"<<_class;
+    name_out<<ros::package::getPath("cp_clothes_db")<<"/IMG_OUT/"<<_directory_name<<"/"<<_class;
 
     bool numdetected = false;
 
@@ -235,7 +236,8 @@ void CPCLOTHESDB::run() {
     filter_cloud->header.frame_id = _base_frame;
 
     try {
-        bool success_transformation = pcl_ros::transformPointCloud(_rgb_frame, *filter_cloud, cloud_process, *_tf_listener);
+        bool success_transformation = pcl_ros::transformPointCloud(_rgb_frame, ros::Time(0), *filter_cloud, _depth_frame, cloud_process, *_tf_listener);
+        //        bool success_transformation = pcl_ros::transformPointCloud(_rgb_frame, *filter_cloud, cloud_process, *_tf_listener);
         if (!success_transformation) return;
     } catch (tf::TransformException & ex) {
 
@@ -265,6 +267,8 @@ void CPCLOTHESDB::run() {
 
             x_2d = x_3d*fx/z_3d  + cx;
             y_2d = y_3d*fy/z_3d  + cy;
+            if (nxtion==1)
+            	y_2d-=8;
 
             if (x_2d>=0 && y_2d>=0 && x_2d<mask_W && y_2d<mask_H)
                 mask.at<uchar>(y_2d,x_2d) = (uchar)255;
